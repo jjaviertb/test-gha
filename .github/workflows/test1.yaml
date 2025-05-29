@@ -13,7 +13,7 @@ jobs:
         id: test1_2
         run: |
           mkdir build
-          echo "{\"value\": 1}" > build/test.json
+          echo "{\"value\": 123}" > build/test.json
 
       - name: Upload static files as artifact
         id: deployment
