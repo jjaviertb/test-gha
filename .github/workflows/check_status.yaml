@@ -1,15 +1,15 @@
-name: Run Action on Check Suite Completion
+name: Run Action on Commit Status Change
 
 on:
-  check_suite:
-    types: [completed]
+  status: {}
 
 jobs:
-  on_success:
+  on_status:
     runs-on: ubuntu-latest
     steps:
-      - name: Do something when all checks pass
+      - name: Print status information
         run: |
-          echo "All checks have passed!"
-          # Aquí puedes agregar los comandos que quieres ejecutar
-          # después de que todos los checks hayan pasado
+          echo "Commit SHA: ${{ github.sha }}"
+          echo "Context: ${{ github.event.context }}"
+          echo "State: ${{ github.event.state }}"
+          echo "Target URL: ${{ github.event.target_url }}"
