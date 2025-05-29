@@ -1,0 +1,14 @@
+name: test1
+on: [push]
+jobs:
+  check-bats-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: test1.1
+        id: test1_1
+        run: echo "test1.1"
+
+      - name: test1.2
+        id: test1_2
+        run: echo "test1.2"
+      
