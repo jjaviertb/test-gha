@@ -1,0 +1,14 @@
+---
+name: test2
+on: [push]
+jobs:
+  another-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: test2.1
+        id: test2_1
+        run: echo "test2.1"
+
+      - name: test2.2
+        id: test2_2
+        run: echo "test2.2"
