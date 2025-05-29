@@ -1,16 +1,51 @@
-name: Run Action on Commit Status Change
-
+# .github/workflows/final-status.yml
+name: Final Commit Status (check_suite)
 on:
-  check_run:
-    types: [rerequested, completed]
+  check_suite:
+    types: [completed]
 
 jobs:
-  on_status:
+  final_status:
     runs-on: ubuntu-latest
     steps:
-      - name: Print status information
+      - name: Check if all relevant workflows succeeded
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EXPECTED_WORKFLOWS: "Build,Test,Lint"  # Puedes personalizar esto
         run: |
-          echo "Commit SHA: ${{ github.sha }}"
-          echo "Context: ${{ github.event.context }}"
-          echo "State: ${{ github.event.state }}"
-          echo "Target URL: ${{ github.event.target_url }}"
+          echo "Check suite completed for commit ${{ github.event.check_suite.head_sha }}"
+          COMMIT_SHA=${{ github.event.check_suite.head_sha }}
+          OWNER_REPO="${{ github.repository }}"
+
+          # Separar nombres esperados en array
+          IFS=',' read -r -a workflows <<< "$EXPECTED_WORKFLOWS"
+
+          echo "Esperando estos workflows: ${workflows[*]}"
+
+          # Descargar todos los runs del commit
+          runs=$(gh api -H "Accept: application/vnd.github+json" \
+            "/repos/$OWNER_REPO/actions/runs?head_sha=$COMMIT_SHA&per_page=100")
+
+          failures=0
+          for name in "${workflows[@]}"; do
+            # Buscar run por nombre
+            run_status=$(echo "$runs" | jq -r --arg NAME "$name" '
+              .workflow_runs[] | select(.name == $NAME) | .conclusion' | head -n 1)
+
+            if [ -z "$run_status" ]; then
+              echo "❌ Workflow '$name' no encontrado para este commit."
+              failures=$((failures + 1))
+            elif [ "$run_status" != "success" ]; then
+              echo "❌ Workflow '$name' terminó con estado '$run_status'."
+              failures=$((failures + 1))
+            else
+              echo "✅ Workflow '$name' fue exitoso."
+            fi
+          done
+
+          if [ "$failures" -gt 0 ]; then
+            echo "❌ Algunos workflows fallaron o faltan."
+            exit 1
+          else
+            echo "✅ Todos los workflows esperados finalizaron correctamente."
+          fi
